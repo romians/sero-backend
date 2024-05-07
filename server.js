@@ -3,14 +3,14 @@ const express = require('express');
 const multer = require('multer');
 const axios = require('axios');
 const fs = require('fs');
-const path = require('path'); // path ¸ðµâ Ãß°¡
+const path = require('path'); // path ëª¨ë“ˆ ì¶”ê°€
 const app = express();
 const upload = multer({ dest: 'uploads/' });
 
-// Á¤Àû ÆÄÀÏ Á¦°øÀ» À§ÇÑ ¼³Á¤
+// ì •ì  íŒŒì¼ ì œê³µì„ ìœ„í•œ ì„¤ì •
 app.use(express.static('public'));
 
-// ·çÆ® URL ¿äÃ» Ã³¸®
+// ë£¨íŠ¸ URL ìš”ì²­ ì²˜ë¦¬
 app.get('/', function(req, res) {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -26,12 +26,12 @@ app.post('/upload', upload.single('image'), async (req, res) => {
             'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
         };
         const payload = {
-            model: "gpt-4-turbo",
+            model: "gpt-4",
             messages: [{
                 role: "user",
                 content: [{
                         type: "text",
-                        text: "ÀÌ ÀÌ¹ÌÁö¿¡´Â ¹«¾ùÀÌ ÀÖ³ª?"
+                        text: "ì´ ì‚¬ì§„ì˜ ì„¸íƒê¸°í˜¸ë¥¼ ë¶„ì„í•˜ì—¬ ë‹¤ìŒ í˜•ì‹ìœ¼ë¡œ ê°„ë‹¨í•˜ê²Œ ëŒ€ë‹µí•´ì£¼ì„¸ìš”. ë¹¨ëž˜ë°©ë²•: [ì„¸íƒë°©ë²•], ë‹¤ë¦¬ë¯¸ì§ˆ ê°€ëŠ¥ì—¬ë¶€: [ê°€ëŠ¥ ë˜ëŠ” ë¶ˆê°€ëŠ¥](ì˜¨ë„), ê±´ì¡°ë°©ë²•: [ê±´ì¡°ë°©ë²•]"
                     },
                     {
                         type: "image_url",
@@ -41,11 +41,16 @@ app.post('/upload', upload.single('image'), async (req, res) => {
                     }
                 ]
             }],
-            max_tokens: 300
+            max_tokens: 150,
+            temperature: 0.3,
+            top_p: 0.9
         };
 
         const response = await axios.post('https://api.openai.com/v1/chat/completions', payload, { headers });
-        const description = response.data.choices[0].message.content;
+        let description = response.data.choices[0].message.content;
+        
+        // ì¤„ë°”ê¿ˆê³¼ ëŒ€ì‹œ ì œê±°
+        description = description.replace(/\n/g, ' ').replace(/-/g, '');
         res.json({ description });
     } catch (error) {
         console.error(error);
